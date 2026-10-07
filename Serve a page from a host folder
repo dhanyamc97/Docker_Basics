@@ -1,0 +1,38 @@
+### Serve a Page from a Host Folder
+
+#### Task
+Your team keeps a small static landing page in a folder on the host and wants nginx to serve it directly, so editing the file on the host updates the live page with no rebuild. A bind mount is exactly the tool.
+
+#### Instructions
+1. On the host, create the folder `/root/binddemo` and inside it an `index.html` whose content includes the exact line `served from a bind mount`.
+2. Start an nginx container in the background named `bindweb` from the `nginx:alpine` image. Publish the container's port `80` to host port `8085`, and bind-mount the host folder `/root/binddemo` onto the nginx web root `/usr/share/nginx/html`.
+3. When it works, a request to `http://localhost:8085` from the host returns your page.
+
+---
+
+```bash
+# Pull the lightweight Alpine-based Nginx image from Docker Hub
+docker pull nginx:alpine
+
+# Create the directory on the host where the HTML file will live
+mkdir -p /root/binddemo
+
+# Add the required content into index.html inside the newly created folder
+echo 'served from a bind mount' > /root/binddemo/index.html
+
+# Run the Nginx container in detached (background) mode
+# - --name bindweb: Names the container 'bindweb'
+# - -p 8085:80: Maps host port 8085 to container port 80
+# - -v /root/binddemo:/usr/share/nginx/html: Bind-mounts host folder to Nginx root directory
+docker run -d --name bindweb -p 8085:80 \
+  -v /root/binddemo:/usr/share/nginx/html nginx:alpine
+
+# Retry loop: Check up to 10 times to verify the server is responding correctly
+for i in $(seq 1 10); do
+  # Perform a silent request to the host port and check if the expected text is returned
+  curl -s --max-time 2 http://localhost:8085 | grep -q 'served from a bind mount' && break
+  sleep 1
+done
+
+# Final check to fetch and print the output from the running Nginx container
+curl -s --max-time 5 http://localhost:8085

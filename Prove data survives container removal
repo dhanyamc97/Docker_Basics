@@ -1,7 +1,26 @@
-Do this:
+#Do this:
 
-Create a named volume called keepdata.
-Start a first container with keepdata mounted at /data, and inside it create a file /data/note.txt whose content includes the exact line data outlives the container.
-Remove that first container completely.
-Start a new container in the background named vault from the nginx:alpine image, mounting the same keepdata volume at /data.
-Because the file was written onto the volume and not into the first container, it is still there for vault to read even though the container that created it is gone. Named volumes were covered in the named-volumes node.
+#Create a named volume called keepdata.
+#Start a first container with keepdata mounted at /data, and inside it create a file /data/note.txt whose content includes the exact line data outlives the container.
+#Remove that first container completely.
+#Start a new container in the background named vault from the nginx:alpine image, mounting the same keepdata volume at /data.
+#Because the file was written onto the volume and not into the first container, it is still there for vault to read even though the container that created it is gone. Named volumes were covered in the named-volumes node.
+
+#Pull the two images cold, each on its own:
+
+
+docker pull alpine
+docker pull nginx:alpine
+
+#Create the volume, write the note onto it from a first container, and remove that container (--rm removes it as soon as the command finishes):
+
+
+
+docker volume create keepdata
+docker run --rm -v keepdata:/data alpine \
+  sh -c 'echo "data outlives the container" > /data/note.txt'
+
+#Start vault mounting the same volume and read the note back - the file survived because it lives on the volume, not in the removed container:
+
+docker run -d --name vault -v keepdata:/data nginx:alpine
+docker exec vault cat /data/note.txt

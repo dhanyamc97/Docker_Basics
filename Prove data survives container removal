@@ -1,0 +1,7 @@
+Do this:
+
+Create a named volume called keepdata.
+Start a first container with keepdata mounted at /data, and inside it create a file /data/note.txt whose content includes the exact line data outlives the container.
+Remove that first container completely.
+Start a new container in the background named vault from the nginx:alpine image, mounting the same keepdata volume at /data.
+Because the file was written onto the volume and not into the first container, it is still there for vault to read even though the container that created it is gone. Named volumes were covered in the named-volumes node.
